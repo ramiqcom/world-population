@@ -1,8 +1,10 @@
+'use client';
+
 import { Map, RasterTileSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useContext, useEffect } from 'react';
-import { Context } from '../../module/store';
-import { VisObject } from '../../module/type';
+import { Context } from '../module/store';
+import { VisObject } from '../module/type';
 
 export default function MapCanvas() {
   const { map, setMap, year, visParam, style, tiles, setTiles, setCoord } = useContext(Context);

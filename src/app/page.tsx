@@ -4,10 +4,10 @@ import { ChartData, ChartTypeRegistry } from 'chart.js';
 import { Map } from 'maplibre-gl';
 import { useContext, useEffect, useState } from 'react';
 import ChartCanvas from '../components/chart';
+import MapCanvas from '../components/map';
 import years from '../data/years.json';
 import { Context } from '../module/store';
 import { VisObject } from '../module/type';
-import MapCanvas from './map/page';
 
 export default function Home() {
   const [tiles, setTiles] = useState({});
