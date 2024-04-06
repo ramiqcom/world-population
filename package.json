@@ -9,16 +9,27 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/earthengine": "^0.1.397",
+    "@tmcw/togeojson": "^5.8.1",
+    "@turf/turf": "^6.5.0",
+    "chart.js": "^4.4.2",
+    "epsg": "^0.5.0",
+    "eslint-config-prettier": "^9.1.0",
+    "maplibre-gl": "^4.1.2",
+    "next": "14.1.4",
+    "node-self": "^1.0.2",
+    "prettier": "^3.2.5",
     "react": "^18",
+    "react-chartjs-2": "^5.2.0",
     "react-dom": "^18",
-    "next": "14.1.4"
+    "shpjs": "^5.0.0"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "14.1.4"
+    "eslint-config-next": "14.1.4",
+    "typescript": "^5"
   }
 }
