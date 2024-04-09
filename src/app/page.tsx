@@ -15,10 +15,15 @@ export default function Home() {
   const [tiles, setTiles] = useState({});
   const [year, setYear] = useState(2020);
   const [visParam, setVisParam] = useState<VisObject>({
-    min: [0],
-    max: [100],
-    bands: ['population_count'],
+    min: 0,
+    max: 100,
     palette: ['black', 'darkgreen', 'green', 'lightgreen', 'white'],
+  });
+  const [trendShow, setTrendShow] = useState(false);
+  const [trendVisParam, setTrendVisParam] = useState({
+    min: -2.5,
+    max: 10,
+    palette: ['blue', 'yellow', 'red'],
   });
   const [map, setMap] = useState<Map>();
   const [style, setStyle] = useState(
@@ -43,6 +48,10 @@ export default function Home() {
     setData,
     popMapShow,
     setPopMapShow,
+    trendVisParam,
+    setTrendVisParam,
+    trendShow,
+    setTrendShow,
   };
 
   return (
@@ -67,11 +76,46 @@ function Panel() {
   return (
     <div className='float-panel flexible vertical gap'>
       <div className='title'>World Population Explorer</div>
-
       <Population />
+      <Trend />
       <Identify />
-
       <div className='text-center'>{status}</div>
+    </div>
+  );
+}
+
+function Trend() {
+  const { trendVisParam, trendShow, setTrendShow } = useContext(Context);
+  const { palette, max, min } = trendVisParam;
+
+  return (
+    <div className='flexible small-gap' style={{ border: 'thin solid white', padding: '2%' }}>
+      <input
+        type='checkbox'
+        style={{ width: '4%' }}
+        checked={trendShow}
+        onChange={(e) => setTrendShow(e.target.checked)}
+      />
+
+      <div className='flexible vertical gap' style={{ width: '90%' }}>
+        <div>Trend per year</div>
+
+        <div className='text-center' style={{ fontSize: 'small' }}>
+          <div className='flexible wide small-gap'>
+            {min}%
+            <div
+              style={{
+                background: `linear-gradient(to right, ${palette[0]}, ${palette[1]}, ${palette[2]})`,
+                width: '100%',
+                height: '2vh',
+                border: 'thin solid white',
+              }}
+            ></div>
+            +{max}%
+          </div>
+          People/Ha
+        </div>
+      </div>
     </div>
   );
 }
@@ -79,10 +123,10 @@ function Panel() {
 function Population() {
   const { year, setYear, visParam, popMapShow, setPopMapShow } = useContext(Context);
   const [tempYear, setTempYear] = useState(year);
-  const { palette } = visParam;
+  const { palette, max, min } = visParam;
 
   return (
-    <div className='flexible small-gap'>
+    <div className='flexible small-gap' style={{ border: 'thin solid white', padding: '2%' }}>
       <input
         type='checkbox'
         style={{ width: '4%' }}
@@ -90,7 +134,9 @@ function Population() {
         onChange={(e) => setPopMapShow(e.target.checked)}
       />
 
-      <div className='flexible vertical gap' style={{ width: '90%' }}>
+      <div className='flexible vertical small-gap' style={{ width: '90%' }}>
+        <div>Population map</div>
+
         <div>
           <input
             type='range'
@@ -113,8 +159,8 @@ function Population() {
         </div>
 
         <div className='text-center' style={{ fontSize: 'small' }}>
-          <div className='flexible wide gap'>
-            0
+          <div className='flexible wide small-gap'>
+            {min}
             <div
               style={{
                 background: `linear-gradient(to right, ${palette[0]}, ${palette[1]}, ${palette[2]}, ${palette[3]}, ${palette[4]})`,
@@ -123,7 +169,7 @@ function Population() {
                 border: 'thin solid white',
               }}
             ></div>
-            100
+            {max}
           </div>
           People/Ha
         </div>
@@ -169,7 +215,11 @@ function Identify() {
   return (
     <div className='flexible vertical text-center'>
       Click map to see the value
-      <div>{data ? <ChartCanvas options={options} type='line' data={data} /> : undefined}</div>
+      <div>
+        {data ? (
+          <ChartCanvas options={options} type='line' data={data} height='50%' width='100%' />
+        ) : undefined}
+      </div>
     </div>
   );
 }

@@ -8,11 +8,24 @@ import { Context } from '../module/store';
 import { VisObject } from '../module/type';
 
 export default function MapCanvas() {
-  const { map, setMap, year, visParam, style, tiles, setTiles, setData, setStatus, popMapShow } =
-    useContext(Context);
+  const {
+    map,
+    setMap,
+    year,
+    visParam,
+    style,
+    tiles,
+    setTiles,
+    setData,
+    setStatus,
+    popMapShow,
+    trendShow,
+    trendVisParam,
+  } = useContext(Context);
 
   const mapId = 'map';
   const popId = 'pop';
+  const trendId = 'trend';
 
   async function loadData(year: number, visParam: VisObject, map: Map): Promise<void> {
     try {
@@ -75,6 +88,47 @@ export default function MapCanvas() {
     }
   }
 
+  async function loadTrendData(visParam: VisObject, map: Map): Promise<void> {
+    try {
+      setStatus('Generating trend map...');
+
+      const res = await fetch('/trend', {
+        method: 'POST',
+        body: JSON.stringify({ visParam }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const { urlFormat, message } = await res.json();
+
+      if (!res.ok) {
+        throw new Error(message);
+      }
+
+      map.addSource(trendId, {
+        type: 'raster',
+        tiles: [urlFormat],
+        tileSize: 256,
+      });
+
+      map.addLayer({
+        id: trendId,
+        type: 'raster',
+        source: trendId,
+        maxzoom: 15,
+        minzoom: 0,
+        layout: {
+          visibility: trendShow ? 'visible' : 'none',
+        },
+      });
+
+      setStatus(undefined);
+    } catch ({ message }) {
+      setStatus(message);
+    }
+  }
+
   useEffect(() => {
     const map = new Map({
       container: mapId,
@@ -114,17 +168,33 @@ export default function MapCanvas() {
     });
   }, []);
 
+  // Generate pop map
   useEffect(() => {
     if (map) {
       loadData(year, visParam, map);
     }
   }, [map, year, visParam]);
 
+  // Generate pop map
+  useEffect(() => {
+    if (map) {
+      loadTrendData(trendVisParam, map);
+    }
+  }, [map, visParam]);
+
+  // Show or hide pop map
   useEffect(() => {
     if (map && map.getSource(popId)) {
       map.setLayoutProperty(popId, 'visibility', popMapShow ? 'visible' : 'none');
     }
-  }, [map, popMapShow]);
+  }, [popMapShow]);
+
+  // Show or hide trend map
+  useEffect(() => {
+    if (map && map.getSource(trendId)) {
+      map.setLayoutProperty(trendId, 'visibility', trendShow ? 'visible' : 'none');
+    }
+  }, [trendShow]);
 
   return <div id={mapId}></div>;
 }

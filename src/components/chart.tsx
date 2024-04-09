@@ -5,9 +5,11 @@ type ChartProp = {
   type: keyof ChartTypeRegistry;
   options: Record<string, any>;
   data: ChartData<keyof ChartTypeRegistry> | undefined;
+  height: string;
+  width: string;
 };
 
-export default function ChartCanvas({ type, options, data }: ChartProp) {
+export default function ChartCanvas({ type, options, data, height, width }: ChartProp) {
   const chartId: string = 'chart';
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function ChartCanvas({ type, options, data }: ChartProp) {
 
   return (
     <div>
-      <canvas id={chartId} height={'100%'} width={'100%'}></canvas>
+      <canvas id={chartId} height={height} width={width}></canvas>
     </div>
   );
 }

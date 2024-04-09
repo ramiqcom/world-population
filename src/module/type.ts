@@ -3,10 +3,10 @@ import { Map } from 'maplibre-gl';
 import { Dispatch, SetStateAction } from 'react';
 
 export type VisObject = {
-  bands?: string[];
-  min: number[];
-  max: number[];
-  palette?: string[];
+  bands?: string[] | string;
+  min: number[] | number;
+  max: number[] | number;
+  palette?: string[] | string;
 };
 
 export type MapId = {
@@ -25,6 +25,8 @@ export type GlobalContext = {
   setYear: Dispatch<SetStateAction<number>>;
   visParam: VisObject;
   setVisParam: Dispatch<SetStateAction<VisObject>>;
+  trendVisParam: VisObject;
+  setTrendVisParam: Dispatch<SetStateAction<VisObject>>;
   map: Map;
   setMap: Dispatch<SetStateAction<Map>>;
   style: string;
@@ -37,4 +39,6 @@ export type GlobalContext = {
   setStatus: Dispatch<SetStateAction<string>>;
   popMapShow: boolean;
   setPopMapShow: Dispatch<SetStateAction<boolean>>;
+  trendShow: boolean;
+  setTrendShow: Dispatch<SetStateAction<boolean>>;
 };

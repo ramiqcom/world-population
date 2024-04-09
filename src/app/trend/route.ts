@@ -7,15 +7,20 @@ import { MapId, VisObject } from '../../module/type';
 
 export async function POST(req: Request) {
   try {
-    const { start, end, visParam }: { start: number; end: number; visParam: VisObject } =
-      await req.json();
+    const { visParam }: { visParam: VisObject } = await req.json();
 
     await authenticate();
 
-    const startPop: ee.Image = ee.Image(`JRC/GHSL/P2023A/GHS_POP/${start}`);
-    const endPop: ee.Image = ee.Image(`JRC/GHSL/P2023A/GHS_POP/${end}`);
+    const startPop: ee.Image = ee.Image(`JRC/GHSL/P2023A/GHS_POP/1975`);
+    const endPop: ee.Image = ee.Image(`JRC/GHSL/P2023A/GHS_POP/2030`);
+    const mask = startPop.gt(0).or(endPop.gt(0));
 
-    const trend: ee.Image = startPop.subtract(endPop).multiply(-1);
+    const trend: ee.Image = endPop
+      .subtract(startPop)
+      .divide(2030 - 1975)
+      .divide(startPop)
+      .multiply(100)
+      .updateMask(mask);
 
     const { urlFormat }: MapId = await getMapId(trend, visParam);
 
