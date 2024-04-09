@@ -1,3 +1,4 @@
+import { ChartData, ChartTypeRegistry } from 'chart.js';
 import { Map } from 'maplibre-gl';
 import { Dispatch, SetStateAction } from 'react';
 
@@ -30,6 +31,10 @@ export type GlobalContext = {
   setStyle: Dispatch<SetStateAction<string>>;
   tiles: Record<number, string>;
   setTiles: Dispatch<SetStateAction<Record<number, string>>>;
-  coord: number[];
-  setCoord: Dispatch<SetStateAction<number[]>>;
+  data: ChartData<keyof ChartTypeRegistry>;
+  setData: Dispatch<SetStateAction<ChartData<keyof ChartTypeRegistry>>>;
+  status: string;
+  setStatus: Dispatch<SetStateAction<string>>;
+  popMapShow: boolean;
+  setPopMapShow: Dispatch<SetStateAction<boolean>>;
 };

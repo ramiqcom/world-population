@@ -11,23 +11,23 @@ export async function POST(req: Request) {
 
     await authenticate();
 
-    const point = ee.Geometry.Point(coord);
+    const point: ee.Geometry = ee.Geometry.Point(coord);
 
-    const col = ee
+    const col: ee.Image = ee
       .ImageCollection('JRC/GHSL/P2023A/GHS_POP')
       .toBands()
       .rename(years.map((year) => `pop_${year}`));
 
-    const reduce = col.reduceRegion({
+    const reduce: ee.Dictionary = col.reduceRegion({
       reducer: ee.Reducer.first(),
       scale: 100,
       geometry: point,
       maxPixels: 1e13,
     });
 
-    const values = reduce.values();
+    const values: ee.List = reduce.values();
 
-    const evaluateData = await evaluate(values);
+    const evaluateData: number[] = await evaluate(values);
 
     return NextResponse.json({ values: evaluateData }, { status: 200 });
   } catch ({ message }) {

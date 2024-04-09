@@ -2,7 +2,7 @@
 
 import { ChartData, ChartTypeRegistry } from 'chart.js';
 import { Map } from 'maplibre-gl';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 import ChartCanvas from '../components/chart';
 import MapCanvas from '../components/map';
 import years from '../data/years.json';
@@ -10,6 +10,8 @@ import { Context } from '../module/store';
 import { VisObject } from '../module/type';
 
 export default function Home() {
+  const [status, setStatus] = useState<string>();
+  const [popMapShow, setPopMapShow] = useState(true);
   const [tiles, setTiles] = useState({});
   const [year, setYear] = useState(2020);
   const [visParam, setVisParam] = useState<VisObject>({
@@ -22,9 +24,11 @@ export default function Home() {
   const [style, setStyle] = useState(
     `https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json?api_key=${process.env.NEXT_PUBLIC_STADIA_KEY}`,
   );
-  const [coord, setCoord] = useState<number[]>();
+  const [data, setData] = useState<ChartData<keyof ChartTypeRegistry>>();
 
   const contextState = {
+    status,
+    setStatus,
     year,
     setYear,
     visParam,
@@ -35,8 +39,10 @@ export default function Home() {
     setStyle,
     tiles,
     setTiles,
-    coord,
-    setCoord,
+    data,
+    setData,
+    popMapShow,
+    setPopMapShow,
   };
 
   return (
@@ -56,68 +62,78 @@ function Float() {
 }
 
 function Panel() {
-  const { year, setYear } = useContext(Context);
-
-  const [tempYear, setTempYear] = useState(year);
+  const { status } = useContext(Context);
 
   return (
     <div className='float-panel flexible vertical gap'>
       <div className='title'>World Population Explorer</div>
-      <div>
-        <input
-          type='range'
-          value={tempYear}
-          min={years.at(0)}
-          max={years.at(-1)}
-          step={5}
-          onChange={(e) => setTempYear(Number(e.target.value))}
-          onMouseUp={() => setYear(tempYear)}
-          style={{
-            width: '100%',
-          }}
-        />
 
-        <div style={{ width: '100%', fontSize: 'small' }} className='flexible wide'>
-          {years.map((year, index) => (
-            <div key={index}>{year}</div>
-          ))}
-        </div>
-      </div>
-
-      <Legend />
-
+      <Population />
       <Identify />
+
+      <div className='text-center'>{status}</div>
     </div>
   );
 }
 
-function Legend() {
-  const { visParam } = useContext(Context);
+function Population() {
+  const { year, setYear, visParam, popMapShow, setPopMapShow } = useContext(Context);
+  const [tempYear, setTempYear] = useState(year);
   const { palette } = visParam;
 
   return (
-    <div className='text-center'>
-      <div className='flexible wide gap'>
-        0
-        <div
-          style={{
-            background: `linear-gradient(to right, ${palette[0]}, ${palette[1]}, ${palette[2]}, ${palette[3]}, ${palette[4]})`,
-            width: '100%',
-            height: '2vh',
-            border: 'thin solid white',
-          }}
-        ></div>
-        100
+    <div className='flexible small-gap'>
+      <input
+        type='checkbox'
+        style={{ width: '4%' }}
+        checked={popMapShow}
+        onChange={(e) => setPopMapShow(e.target.checked)}
+      />
+
+      <div className='flexible vertical gap' style={{ width: '90%' }}>
+        <div>
+          <input
+            type='range'
+            value={tempYear}
+            min={years.at(0)}
+            max={years.at(-1)}
+            step={5}
+            onChange={(e) => setTempYear(Number(e.target.value))}
+            onMouseUp={() => setYear(tempYear)}
+            style={{
+              width: '100%',
+            }}
+          />
+
+          <div style={{ width: '100%', fontSize: 'x-small' }} className='flexible wide'>
+            {years.map((year, index) => (
+              <div key={index}>{year}</div>
+            ))}
+          </div>
+        </div>
+
+        <div className='text-center' style={{ fontSize: 'small' }}>
+          <div className='flexible wide gap'>
+            0
+            <div
+              style={{
+                background: `linear-gradient(to right, ${palette[0]}, ${palette[1]}, ${palette[2]}, ${palette[3]}, ${palette[4]})`,
+                width: '100%',
+                height: '2vh',
+                border: 'thin solid white',
+              }}
+            ></div>
+            100
+          </div>
+          People/Ha
+        </div>
       </div>
-      People/Ha
     </div>
   );
 }
 
 function Identify() {
-  const { coord } = useContext(Context);
-
-  const [data, setData] = useState<ChartData<keyof ChartTypeRegistry>>();
+  const { data } = useContext(Context);
 
   // chart options
   const options = {
@@ -150,39 +166,10 @@ function Identify() {
     },
   };
 
-  async function generateChart(coord: number[]) {
-    const res = await fetch('/value', {
-      method: 'POST',
-      body: JSON.stringify({ coord }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const { values, message } = await res.json();
-
-    if (!res.ok) {
-      throw new Error(message);
-    }
-
-    setData({
-      labels: years,
-      datasets: [{ data: values, fill: true, label: 'Population' }],
-    });
-  }
-
-  useEffect(() => {
-    if (coord) {
-      generateChart(coord);
-    }
-  }, [coord]);
-
   return (
     <div className='flexible vertical text-center'>
       Click map to see the value
-      <div style={{ visibility: data ? 'visible' : 'hidden' }}>
-        <ChartCanvas options={options} type='line' data={data} />
-      </div>
+      <div>{data ? <ChartCanvas options={options} type='line' data={data} /> : undefined}</div>
     </div>
   );
 }

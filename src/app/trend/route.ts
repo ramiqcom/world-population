@@ -7,13 +7,17 @@ import { MapId, VisObject } from '../../module/type';
 
 export async function POST(req: Request) {
   try {
+    const { start, end, visParam }: { start: number; end: number; visParam: VisObject } =
+      await req.json();
+
     await authenticate();
 
-    const { year, visParam }: { year: number; visParam: VisObject } = await req.json();
+    const startPop: ee.Image = ee.Image(`JRC/GHSL/P2023A/GHS_POP/${start}`);
+    const endPop: ee.Image = ee.Image(`JRC/GHSL/P2023A/GHS_POP/${end}`);
 
-    const ghsl: ee.Image = ee.Image(`JRC/GHSL/P2023A/GHS_POP/${year}`).selfMask();
+    const trend: ee.Image = startPop.subtract(endPop).multiply(-1);
 
-    const { urlFormat }: MapId = await getMapId(ghsl, visParam);
+    const { urlFormat }: MapId = await getMapId(trend, visParam);
 
     return NextResponse.json({ urlFormat }, { status: 200 });
   } catch ({ message }) {

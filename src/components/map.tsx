@@ -3,65 +3,75 @@
 import { Map, RasterTileSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useContext, useEffect } from 'react';
+import years from '../data/years.json';
 import { Context } from '../module/store';
 import { VisObject } from '../module/type';
 
 export default function MapCanvas() {
-  const { map, setMap, year, visParam, style, tiles, setTiles, setCoord } = useContext(Context);
+  const { map, setMap, year, visParam, style, tiles, setTiles, setData, setStatus, popMapShow } =
+    useContext(Context);
 
   const mapId = 'map';
   const popId = 'pop';
 
   async function loadData(year: number, visParam: VisObject, map: Map): Promise<void> {
-    let url: string;
+    try {
+      setStatus('Generating map...');
 
-    if (tiles[year]) {
-      url = tiles[year];
-    } else {
-      const body = {
-        year,
-        visParam,
-      };
+      let url: string;
 
-      const res = await fetch('/ghsl', {
-        method: 'POST',
-        body: JSON.stringify(body),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      if (tiles[year]) {
+        url = tiles[year];
+      } else {
+        const body = {
+          year,
+          visParam,
+        };
 
-      const { urlFormat, message } = await res.json();
+        const res = await fetch('/ghsl', {
+          method: 'POST',
+          body: JSON.stringify(body),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
-      if (!res.ok) {
-        throw new Error(message);
+        const { urlFormat, message } = await res.json();
+
+        if (!res.ok) {
+          throw new Error(message);
+        }
+
+        // Set generated url to url
+        url = urlFormat;
+
+        // Set generated tile
+        const newTiles = tiles;
+        newTiles[year] = url;
+        setTiles(newTiles);
       }
 
-      // Set generated url to url
-      url = urlFormat;
+      if (map.getSource(popId)) {
+        const source = map.getSource(popId) as RasterTileSource;
+        source.setTiles([url]);
+      } else {
+        map.addSource(popId, {
+          type: 'raster',
+          tiles: [url],
+          tileSize: 256,
+        });
+        map.addLayer({
+          id: popId,
+          type: 'raster',
+          source: popId,
+          maxzoom: 15,
+          minzoom: 0,
+        });
+      }
 
-      // Set generated tile
-      const newTiles = tiles;
-      newTiles[year] = url;
-      setTiles(newTiles);
-    }
-
-    if (map.getSource(popId)) {
-      const source = map.getSource(popId) as RasterTileSource;
-      source.setTiles([url]);
-    } else {
-      map.addSource(popId, {
-        type: 'raster',
-        tiles: [url],
-        tileSize: 256,
-      });
-      map.addLayer({
-        id: popId,
-        type: 'raster',
-        source: popId,
-        maxzoom: 15,
-        minzoom: 0,
-      });
+      setStatus(undefined);
+    } catch ({ message }) {
+      setStatus(message);
     }
   }
 
@@ -74,8 +84,33 @@ export default function MapCanvas() {
     });
     setMap(map);
 
-    map.on('click', (e) => {
-      setCoord(e.lngLat.toArray());
+    map.on('click', async (e) => {
+      try {
+        setStatus('Generating chart...');
+
+        const res = await fetch('/value', {
+          method: 'POST',
+          body: JSON.stringify({ coord: e.lngLat.toArray() }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const { values, message } = await res.json();
+
+        if (!res.ok) {
+          throw new Error(message);
+        }
+
+        setData({
+          labels: years,
+          datasets: [{ data: values, fill: true, label: 'Population' }],
+        });
+
+        setStatus(undefined);
+      } catch ({ message }) {
+        setStatus(message);
+      }
     });
   }, []);
 
@@ -84,6 +119,12 @@ export default function MapCanvas() {
       loadData(year, visParam, map);
     }
   }, [map, year, visParam]);
+
+  useEffect(() => {
+    if (map && map.getSource(popId)) {
+      map.setLayoutProperty(popId, 'visibility', popMapShow ? 'visible' : 'none');
+    }
+  }, [map, popMapShow]);
 
   return <div id={mapId}></div>;
 }
