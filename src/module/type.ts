@@ -1,3 +1,4 @@
+import { FeatureCollection } from '@turf/turf';
 import { ChartData, ChartTypeRegistry } from 'chart.js';
 import { Map } from 'maplibre-gl';
 import { Dispatch, SetStateAction } from 'react';
@@ -41,4 +42,10 @@ export type GlobalContext = {
   setPopMapShow: Dispatch<SetStateAction<boolean>>;
   trendShow: boolean;
   setTrendShow: Dispatch<SetStateAction<boolean>>;
+  downloadLink: string;
+  setDownloadLink: Dispatch<SetStateAction<string>>;
+  analysisOption: string;
+  setAnalysisOption: Dispatch<SetStateAction<string>>;
+  geojson: FeatureCollection<any>;
+  setGeojson: Dispatch<SetStateAction<FeatureCollection<any>>>;
 };

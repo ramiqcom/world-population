@@ -1,9 +1,11 @@
 'use client';
 
+import { point } from '@turf/turf';
 import { Map, RasterTileSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useContext, useEffect } from 'react';
 import years from '../data/years.json';
+import { calculatePop } from '../module/calculate';
 import { Context } from '../module/store';
 import { VisObject } from '../module/type';
 
@@ -21,6 +23,8 @@ export default function MapCanvas() {
     popMapShow,
     trendShow,
     trendVisParam,
+    setDownloadLink,
+    geojson,
   } = useContext(Context);
 
   const mapId = 'map';
@@ -142,24 +146,24 @@ export default function MapCanvas() {
       try {
         setStatus('Generating chart...');
 
-        const res = await fetch('/value', {
-          method: 'POST',
-          body: JSON.stringify({ coord: e.lngLat.toArray() }),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        const { values, message } = await res.json();
-
-        if (!res.ok) {
-          throw new Error(message);
-        }
+        const geojson = point(e.lngLat.toArray()).geometry;
+        const values = await calculatePop(geojson);
 
         setData({
           labels: years,
           datasets: [{ data: values, fill: true, label: 'Population' }],
         });
+
+        // Set array only for csv
+        const dataOnly = years.map((year, index) => [year, values[index]]);
+        dataOnly.unshift(['Year', 'Population']);
+
+        // Create string from the data
+        const strings = dataOnly.map((arr) => arr.join(', ')).join('\n');
+
+        // Create link for download
+        const link = encodeURI(`data:text/csv;charset=utf-8,${strings}`);
+        setDownloadLink(link);
 
         setStatus(undefined);
       } catch ({ message }) {
