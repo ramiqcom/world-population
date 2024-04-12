@@ -92,6 +92,12 @@ function Panel() {
       <Trend />
       <Identify />
       <div className='text-center'>{status}</div>
+      <div style={{ fontSize: 'xx-small' }}>
+        Data source: Schiavina, Marcello; Freire, Sergio; Alessandra Carioli; MacManus, Kytt (2023):
+        GHS-POP R2023A - GHS population grid multitemporal (1975-2030). European Commission, Joint
+        Research Centre (JRC) PID: http://data.europa.eu/89h/2ff68a52-5b5b-4a22-8f40-c41da8332cfe
+        doi:10.2905/2FF68A52-5B5B-4A22-8F40-C41DA8332CFE
+      </div>
     </div>
   );
 }
@@ -109,7 +115,7 @@ function Trend() {
         onChange={(e) => setTrendShow(e.target.checked)}
       />
 
-      <div className='flexible vertical gap' style={{ width: '90%' }}>
+      <div className='flexible vertical small-gap' style={{ width: '90%' }}>
         <div>Trend per year</div>
 
         <div className='text-center' style={{ fontSize: 'small' }}>
@@ -163,7 +169,7 @@ function Population() {
             }}
           />
 
-          <div style={{ width: '100%', fontSize: 'x-small' }} className='flexible wide'>
+          <div style={{ width: '100%', fontSize: 'xx-small' }} className='flexible wide'>
             {years.map((year, index) => (
               <div key={index}>{year}</div>
             ))}
@@ -225,8 +231,8 @@ function Identify() {
   };
 
   return (
-    <div className='flexible vertical text-center gap'>
-      <div style={{ fontSize: 'large' }}>Analysis</div>
+    <div className='flexible vertical text-center small-gap'>
+      <div className='title'>Analysis</div>
       <div className='flexible wide'>
         <button
           className='button-select'
