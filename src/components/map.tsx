@@ -1,11 +1,11 @@
 'use client';
 
-import { point } from '@turf/turf';
+import { Geometry, point } from '@turf/turf';
 import { Map, RasterTileSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useContext, useEffect } from 'react';
 import years from '../data/years.json';
-import { calculatePop } from '../module/calculate';
+import { calculateValues, ghsl, trend } from '../module/server';
 import { Context } from '../module/store';
 import { VisObject } from '../module/type';
 
@@ -45,19 +45,7 @@ export default function MapCanvas() {
           visParam,
         };
 
-        const res = await fetch('/ghsl', {
-          method: 'POST',
-          body: JSON.stringify(body),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        const { urlFormat, message } = await res.json();
-
-        if (!res.ok) {
-          throw new Error(message);
-        }
+        const { urlFormat } = await ghsl(body);
 
         // Set generated url to url
         url = urlFormat;
@@ -96,19 +84,7 @@ export default function MapCanvas() {
     try {
       setStatus('Generating trend map...');
 
-      const res = await fetch('/trend', {
-        method: 'POST',
-        body: JSON.stringify({ visParam }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const { urlFormat, message } = await res.json();
-
-      if (!res.ok) {
-        throw new Error(message);
-      }
+      const { urlFormat } = await trend({ visParam });
 
       map.addSource(trendId, {
         type: 'raster',
@@ -147,7 +123,7 @@ export default function MapCanvas() {
         setStatus('Generating chart...');
 
         const geojson = point(e.lngLat.toArray()).geometry;
-        const values = await calculatePop(geojson);
+        const { values } = await calculateValues({ geojson: geojson as Geometry });
 
         setData({
           labels: years,
