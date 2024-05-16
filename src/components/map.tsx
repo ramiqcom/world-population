@@ -1,113 +1,32 @@
-'use client';
-
-import { Geometry, point } from '@turf/turf';
-import { Map, RasterTileSource } from 'maplibre-gl';
+import { bbox, Geometry, point } from '@turf/turf';
+import { GeoJSONSource, LngLatBoundsLike, Map, RasterTileSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { useContext, useEffect } from 'react';
-import years from '../data/years.json';
-import { calculateValues, ghsl, trend } from '../module/server';
+import { useContext, useEffect, useState } from 'react';
+import { calculateValues } from '../module/server';
 import { Context } from '../module/store';
-import { VisObject } from '../module/type';
 
 export default function MapCanvas() {
   const {
     map,
     setMap,
-    year,
-    visParam,
     style,
-    tiles,
-    setTiles,
     setData,
     setStatus,
     popMapShow,
     trendShow,
-    trendVisParam,
     setDownloadLink,
+    years,
+    tile,
+    trendTile,
     geojson,
   } = useContext(Context);
 
   const mapId = 'map';
   const popId = 'pop';
   const trendId = 'trend';
+  const vectorId = 'vector';
 
-  async function loadData(year: number, visParam: VisObject, map: Map): Promise<void> {
-    try {
-      setStatus('Generating map...');
-
-      let url: string;
-
-      if (tiles[year]) {
-        url = tiles[year];
-      } else {
-        const body = {
-          year,
-          visParam,
-        };
-
-        const { urlFormat } = await ghsl(body);
-
-        // Set generated url to url
-        url = urlFormat;
-
-        // Set generated tile
-        const newTiles = tiles;
-        newTiles[year] = url;
-        setTiles(newTiles);
-      }
-
-      if (map.getSource(popId)) {
-        const source = map.getSource(popId) as RasterTileSource;
-        source.setTiles([url]);
-      } else {
-        map.addSource(popId, {
-          type: 'raster',
-          tiles: [url],
-          tileSize: 256,
-        });
-        map.addLayer({
-          id: popId,
-          type: 'raster',
-          source: popId,
-          maxzoom: 15,
-          minzoom: 0,
-        });
-      }
-
-      setStatus(undefined);
-    } catch ({ message }) {
-      setStatus(message);
-    }
-  }
-
-  async function loadTrendData(visParam: VisObject, map: Map): Promise<void> {
-    try {
-      setStatus('Generating trend map...');
-
-      const { urlFormat } = await trend({ visParam });
-
-      map.addSource(trendId, {
-        type: 'raster',
-        tiles: [urlFormat],
-        tileSize: 256,
-      });
-
-      map.addLayer({
-        id: trendId,
-        type: 'raster',
-        source: trendId,
-        maxzoom: 15,
-        minzoom: 0,
-        layout: {
-          visibility: trendShow ? 'visible' : 'none',
-        },
-      });
-
-      setStatus(undefined);
-    } catch ({ message }) {
-      setStatus(message);
-    }
-  }
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
     const map = new Map({
@@ -117,6 +36,10 @@ export default function MapCanvas() {
       style,
     });
     setMap(map);
+
+    map.on('load', () => {
+      setMapLoaded(true);
+    });
 
     map.on('click', async (e) => {
       try {
@@ -148,33 +71,92 @@ export default function MapCanvas() {
     });
   }, []);
 
-  // Generate pop map
   useEffect(() => {
-    if (map) {
-      loadData(year, visParam, map);
+    if (mapLoaded) {
+      if (map.getSource(popId)) {
+        const source = map.getSource(popId) as RasterTileSource;
+        source.setTiles([tile]);
+      } else {
+        map.addSource(popId, {
+          type: 'raster',
+          tiles: [tile],
+          tileSize: 256,
+        });
+        map.addLayer({
+          id: popId,
+          type: 'raster',
+          source: popId,
+          maxzoom: 15,
+          minzoom: 0,
+        });
+      }
     }
-  }, [map, year, visParam]);
+  }, [mapLoaded, tile]);
 
-  // Generate pop map
   useEffect(() => {
-    if (map) {
-      loadTrendData(trendVisParam, map);
+    if (mapLoaded) {
+      map.addSource(trendId, {
+        type: 'raster',
+        tiles: [trendTile],
+        tileSize: 256,
+      });
+
+      map.addLayer(
+        {
+          id: trendId,
+          type: 'raster',
+          source: trendId,
+          maxzoom: 15,
+          minzoom: 0,
+          layout: {
+            visibility: trendShow ? 'visible' : 'none',
+          },
+        },
+        popId,
+      );
     }
-  }, [map, visParam]);
+  }, [mapLoaded, trendTile]);
+
+  // Show geojson
+  useEffect(() => {
+    if (mapLoaded && geojson) {
+      if (map.getSource(vectorId)) {
+        const source = map.getSource(vectorId) as GeoJSONSource;
+        source.setData(geojson);
+      } else {
+        map.addSource(vectorId, {
+          type: 'geojson',
+          data: geojson,
+        });
+        map.addLayer({
+          source: vectorId,
+          id: vectorId,
+          type: 'line',
+          paint: {
+            'line-color': 'cyan',
+            'line-width': 4,
+          },
+        });
+      }
+
+      const bounds = bbox(geojson);
+      map.fitBounds(bounds as LngLatBoundsLike);
+    }
+  }, [mapLoaded, geojson]);
 
   // Show or hide pop map
   useEffect(() => {
-    if (map && map.getSource(popId)) {
+    if (mapLoaded && map.getSource(popId)) {
       map.setLayoutProperty(popId, 'visibility', popMapShow ? 'visible' : 'none');
     }
-  }, [popMapShow]);
+  }, [mapLoaded, popMapShow]);
 
   // Show or hide trend map
   useEffect(() => {
-    if (map && map.getSource(trendId)) {
+    if (mapLoaded && map.getSource(trendId)) {
       map.setLayoutProperty(trendId, 'visibility', trendShow ? 'visible' : 'none');
     }
-  }, [trendShow]);
+  }, [mapLoaded, trendShow]);
 
   return <div id={mapId}></div>;
 }

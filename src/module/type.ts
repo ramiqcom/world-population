@@ -3,6 +3,8 @@ import { ChartData, ChartTypeRegistry } from 'chart.js';
 import { Map } from 'maplibre-gl';
 import { Dispatch, SetStateAction } from 'react';
 
+export type SetState<T> = Dispatch<SetStateAction<T>>;
+
 export type VisObject = {
   bands?: string[] | string;
   min: number[] | number;
@@ -23,29 +25,31 @@ export type ResponseMap = {
 
 export type GlobalContext = {
   year: number;
-  setYear: Dispatch<SetStateAction<number>>;
+  setYear: SetState<number>;
   visParam: VisObject;
-  setVisParam: Dispatch<SetStateAction<VisObject>>;
   trendVisParam: VisObject;
-  setTrendVisParam: Dispatch<SetStateAction<VisObject>>;
   map: Map;
-  setMap: Dispatch<SetStateAction<Map>>;
+  setMap: SetState<Map>;
   style: string;
-  setStyle: Dispatch<SetStateAction<string>>;
+  setStyle: SetState<string>;
+  tile: string;
+  setTile: SetState<string>;
   tiles: Record<number, string>;
-  setTiles: Dispatch<SetStateAction<Record<number, string>>>;
+  setTiles: SetState<Record<string, string>>;
   data: ChartData<keyof ChartTypeRegistry>;
-  setData: Dispatch<SetStateAction<ChartData<keyof ChartTypeRegistry>>>;
+  setData: SetState<ChartData<keyof ChartTypeRegistry>>;
   status: string;
-  setStatus: Dispatch<SetStateAction<string>>;
+  setStatus: SetState<string>;
   popMapShow: boolean;
-  setPopMapShow: Dispatch<SetStateAction<boolean>>;
+  setPopMapShow: SetState<boolean>;
   trendShow: boolean;
-  setTrendShow: Dispatch<SetStateAction<boolean>>;
+  setTrendShow: SetState<boolean>;
   downloadLink: string;
-  setDownloadLink: Dispatch<SetStateAction<string>>;
+  setDownloadLink: SetState<string>;
   analysisOption: string;
-  setAnalysisOption: Dispatch<SetStateAction<string>>;
+  setAnalysisOption: SetState<string>;
   geojson: FeatureCollection<any>;
-  setGeojson: Dispatch<SetStateAction<FeatureCollection<any>>>;
+  setGeojson: SetState<FeatureCollection<any>>;
+  years: number[];
+  trendTile: string;
 };
