@@ -222,7 +222,7 @@ function Identify() {
         stacked: true,
         title: {
           display: true,
-          text: 'Population per hectare',
+          text: 'Population',
         },
       },
       x: {
@@ -284,6 +284,8 @@ function ChartPop() {
     years,
   } = useContext(Context);
 
+  const [disabledCalculate, setDisabledCalculate] = useState(true);
+
   // chart options
   const options = {
     scales: {
@@ -292,7 +294,7 @@ function ChartPop() {
         stacked: true,
         title: {
           display: true,
-          text: 'Population per hectare',
+          text: 'Population',
         },
       },
       x: {
@@ -320,9 +322,10 @@ function ChartPop() {
       {analysisOption !== 'click' ? (
         <button
           style={{ width: '100%' }}
-          disabled={geojson ? false : true}
+          disabled={geojson && disabledCalculate ? false : true}
           onClick={async () => {
             try {
+              setDisabledCalculate(false);
               setStatus('Generating chart...');
 
               const { values } = await calculateValues({ geojson: geojson.features[0].geometry });
@@ -346,6 +349,8 @@ function ChartPop() {
               setStatus(undefined);
             } catch ({ message }) {
               setStatus(message);
+            } finally {
+              setDisabledCalculate(true);
             }
           }}
         >
