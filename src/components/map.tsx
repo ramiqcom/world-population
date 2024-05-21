@@ -2,7 +2,8 @@ import { bbox, Geometry, point } from '@turf/turf';
 import { GeoJSONSource, LngLatBoundsLike, Map, RasterTileSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useContext, useEffect, useState } from 'react';
-import { calculateValues } from '../module/server';
+import years from '../data/years.json';
+import { calculateValues, ghsl, trend } from '../module/server';
 import { Context } from '../module/store';
 
 export default function MapCanvas() {
@@ -15,10 +16,15 @@ export default function MapCanvas() {
     popMapShow,
     trendShow,
     setDownloadLink,
-    years,
     tile,
+    setTile,
     trendTile,
+    setTrendTile,
     geojson,
+    year,
+    visParam,
+    trendVisParam,
+    setTiles,
   } = useContext(Context);
 
   const mapId = 'map';
@@ -27,6 +33,21 @@ export default function MapCanvas() {
   const vectorId = 'vector';
 
   const [mapLoaded, setMapLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadTile() {
+      const tiles = {};
+
+      const { urlFormat: tile } = await ghsl({ year: year, visParam });
+      tiles[year] = tile;
+      setTile(tile);
+      setTiles(tiles);
+
+      const { urlFormat: trendTile } = await trend({ visParam: trendVisParam });
+      setTrendTile(trendTile);
+    }
+    loadTile();
+  }, []);
 
   useEffect(() => {
     const map = new Map({
@@ -72,7 +93,7 @@ export default function MapCanvas() {
   }, []);
 
   useEffect(() => {
-    if (mapLoaded) {
+    if (mapLoaded && tile) {
       if (map.getSource(popId)) {
         const source = map.getSource(popId) as RasterTileSource;
         source.setTiles([tile]);
@@ -94,26 +115,30 @@ export default function MapCanvas() {
   }, [mapLoaded, tile]);
 
   useEffect(() => {
-    if (mapLoaded) {
-      map.addSource(trendId, {
-        type: 'raster',
-        tiles: [trendTile],
-        tileSize: 256,
-      });
-
-      map.addLayer(
-        {
-          id: trendId,
+    if (mapLoaded && trendTile) {
+      if (map.getSource(trendId)) {
+        const source = map.getSource(trendId) as RasterTileSource;
+        source.setTiles([trendTile]);
+      } else {
+        map.addSource(trendId, {
           type: 'raster',
-          source: trendId,
-          maxzoom: 15,
-          minzoom: 0,
-          layout: {
-            visibility: trendShow ? 'visible' : 'none',
+          tiles: [trendTile],
+          tileSize: 256,
+        });
+        map.addLayer(
+          {
+            id: trendId,
+            type: 'raster',
+            source: trendId,
+            maxzoom: 15,
+            minzoom: 0,
+            layout: {
+              visibility: trendShow ? 'visible' : 'none',
+            },
           },
-        },
-        popId,
-      );
+          popId,
+        );
+      }
     }
   }, [mapLoaded, trendTile]);
 

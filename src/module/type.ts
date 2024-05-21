@@ -50,6 +50,6 @@ export type GlobalContext = {
   setAnalysisOption: SetState<string>;
   geojson: FeatureCollection<any>;
   setGeojson: SetState<FeatureCollection<any>>;
-  years: number[];
   trendTile: string;
+  setTrendTile: SetState<string>;
 };

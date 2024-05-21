@@ -4,34 +4,25 @@ import { dissolve, FeatureCollection, flatten } from '@turf/turf';
 import { ChartData, ChartTypeRegistry } from 'chart.js';
 import { Map } from 'maplibre-gl';
 import { useContext, useState } from 'react';
+import years from '../data/years.json';
 import { loadGeojson } from '../module/geodata';
 import { calculateValues, ghsl } from '../module/server';
 import { Context } from '../module/store';
-import { VisObject } from '../module/type';
 import ChartCanvas from './chart';
 import MapCanvas from './map';
 
-export default function Home({
-  defaultStates,
-}: {
-  defaultStates: {
-    years: number[];
-    year: number;
-    visParam: VisObject;
-    trendVisParam: VisObject;
-    tiles: Record<string, string>;
-    trendTile: string;
-    style: string;
-  };
-}) {
+export default function Home() {
   const [status, setStatus] = useState<string>();
   const [popMapShow, setPopMapShow] = useState(true);
-  const [tile, setTile] = useState(defaultStates.tiles[defaultStates.year]);
-  const [tiles, setTiles] = useState(defaultStates.tiles);
-  const [year, setYear] = useState(defaultStates.year);
+  const [tile, setTile] = useState<string>();
+  const [trendTile, setTrendTile] = useState<string>();
+  const [tiles, setTiles] = useState({});
+  const [year, setYear] = useState(years[8]);
   const [trendShow, setTrendShow] = useState(false);
   const [map, setMap] = useState<Map>();
-  const [style, setStyle] = useState(defaultStates.style);
+  const [style, setStyle] = useState(
+    `https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json?api_key=${process.env.NEXT_PUBLIC_STADIA_KEY}`,
+  );
   const [data, setData] = useState<ChartData<keyof ChartTypeRegistry>>();
   const [downloadLink, setDownloadLink] = useState<string>();
   const [analysisOption, setAnalysisOption] = useState('click');
@@ -44,7 +35,11 @@ export default function Home({
     setYear,
     tile,
     setTile,
-    visParam: defaultStates.visParam,
+    visParam: {
+      min: 0,
+      max: 100,
+      palette: ['black', 'darkgreen', 'green', 'lightgreen', 'white'],
+    },
     map,
     setMap,
     style,
@@ -55,7 +50,11 @@ export default function Home({
     setData,
     popMapShow,
     setPopMapShow,
-    trendVisParam: defaultStates.trendVisParam,
+    trendVisParam: {
+      min: -2.5,
+      max: 10,
+      palette: ['blue', 'yellow', 'red'],
+    },
     trendShow,
     setTrendShow,
     downloadLink,
@@ -64,8 +63,8 @@ export default function Home({
     setAnalysisOption,
     geojson,
     setGeojson,
-    years: defaultStates.years,
-    trendTile: defaultStates.trendTile,
+    trendTile,
+    setTrendTile,
   };
 
   return (
@@ -141,7 +140,7 @@ function Trend() {
 }
 
 function Population() {
-  const { year, setYear, visParam, popMapShow, setPopMapShow, years, setTile, tiles } =
+  const { year, setYear, visParam, popMapShow, setPopMapShow, setTile, tiles } =
     useContext(Context);
   const [tempYear, setTempYear] = useState(year);
   const { palette, max, min } = visParam;
@@ -273,16 +272,8 @@ function Identify() {
 }
 
 function ChartPop() {
-  const {
-    data,
-    downloadLink,
-    analysisOption,
-    geojson,
-    setStatus,
-    setData,
-    setDownloadLink,
-    years,
-  } = useContext(Context);
+  const { data, downloadLink, analysisOption, geojson, setStatus, setData, setDownloadLink } =
+    useContext(Context);
 
   const [disabledCalculate, setDisabledCalculate] = useState(true);
 
